@@ -1,28 +1,29 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
-from withings import WithingsAccount
-from garmin import GarminConnect
-from fit import FitEncoder_Weight
-
-from optparse import OptionParser
-from optparse import Option
-from optparse import OptionValueError
+import sys
+import time
 from datetime import date
 from datetime import datetime
-import time
-import sys
 
+import os
+from optparse import Option
+from optparse import OptionParser
+from optparse import OptionValueError
 
-WITHINGS_USERNMAE = ''
-WITHINGS_PASSWORD = ''
-WITHINGS_SHORTNAME = ''
+from fit import FitEncoder_Weight
+from garmin import GarminConnect
+from withings import WithingsAccount
 
-GARMIN_USERNAME = ''
-GARMIN_PASSWORD = ''
+WITHINGS_USERNAME = os.environ.get('WITHINGS_USERNAME')
+WITHINGS_PASSWORD = os.environ.get('WITHINGS_PASSWORD')
+WITHINGS_SHORTNAME = os.environ.get('WITHINGS_SHORTNAME')
+
+GARMIN_USERNAME = os.environ.get('GARMIN_USERNAME')
+GARMIN_PASSWORD = os.environ.get('GARMIN_PASSWORD')
+
 
 class DateOption(Option):
-    def check_date(option, opt, value):
+    def check_date(self, opt, value):
         valid_formats = ['%Y-%m-%d', '%Y%m%d', '%Y/%m/%d']
         for f in valid_formats:
             try:
@@ -31,7 +32,8 @@ class DateOption(Option):
             except ValueError:
                 pass
         raise OptionValueError('option %s: invalid date or format: %s. use following format: %s'
-                                 % (opt, value, ','.join(valid_formats)))
+                               % (opt, value, ','.join(valid_formats)))
+
     TYPES = Option.TYPES + ('date',)
     TYPE_CHECKER = Option.TYPE_CHECKER.copy()
     TYPE_CHECKER['date'] = check_date
@@ -41,7 +43,7 @@ def main():
     usage = 'usage: sync.py [options]'
     p = OptionParser(usage=usage, option_class=DateOption)
     p.add_option('--withings-username', '--wu',
-                 default=WITHINGS_USERNMAE, metavar='<user>', help='username to login Withings Web Service.')
+                 default=WITHINGS_USERNAME, metavar='<user>', help='username to login Withings Web Service.')
     p.add_option('--withings-password', '--wp',
                  default=WITHINGS_PASSWORD, metavar='<pass>', help='password to login Withings Web Service.')
     p.add_option('--withings-shortname', '--ws',
@@ -62,7 +64,6 @@ def main():
 def sync(withings_username, withings_password, withings_shortname,
          garmin_username, garmin_password,
          fromdate, todate, no_upload, verbose):
-
     def verbose_print(s):
         if verbose:
             if no_upload:
@@ -76,9 +77,9 @@ def sync(withings_username, withings_password, withings_shortname,
     if not user:
         print 'could not find user: %s' % withings_shortname
         return
-    if not user.ispublic:
-        print 'user %s has not opened withings data' % withings_shortname
-        return
+    # if not user.ispublic:
+    #     print 'user %s has not opened withings data' % withings_shortname
+    #     return
     startdate = int(time.mktime(fromdate.timetuple()))
     enddate = int(time.mktime(todate.timetuple())) + 86399
     groups = user.get_measure_groups(startdate=startdate, enddate=enddate)
@@ -99,11 +100,12 @@ def sync(withings_username, withings_password, withings_shortname,
         weight = group.get_weight()
         fat_ratio = group.get_fat_ratio()
         fit.write_device_info(timestamp=dt)
-        fit.write_weight_scale(timestamp=dt,
+        fit.write_weight_scale(
+            timestamp=dt,
             weight=weight,
             percent_fat=fat_ratio,
             percent_hydration=measurements.getPercentHydration()
-            )
+        )
         verbose_print('appending weight scale record... %s %skg %s%%\n' % (dt, weight, fat_ratio))
     fit.finish()
 
@@ -111,7 +113,7 @@ def sync(withings_username, withings_password, withings_shortname,
         sys.stdout.write(fit.getvalue())
         return
 
-	verbose_print("Fit file: " + fit.getvalue())
+    verbose_print("Fit file: " + fit.getvalue())
 
     # garmin connect
     garmin = GarminConnect()
