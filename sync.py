@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 import sys
 import time
-from datetime import date
+from datetime import date, timedelta
 from datetime import datetime
 
 import os
@@ -52,7 +52,7 @@ def main():
                  default=GARMIN_USERNAME, metavar='<user>', help='username to login Garmin Connect.')
     p.add_option('--garmin-password', '--gp',
                  default=GARMIN_PASSWORD, metavar='<pass>', help='password to login Garmin Connect.')
-    p.add_option('-f', '--fromdate', type='date', default=date.today(), metavar='<date>')
+    p.add_option('-f', '--fromdate', type='date', default=date.today() - timedelta(days=7), metavar='<date>')
     p.add_option('-t', '--todate', type='date', default=date.today(), metavar='<date>')
     p.add_option('--no-upload', action='store_true', help="Won't upload to Garmin Connect and output binary-strings to stdout.")
     p.add_option('-v', '--verbose', action='store_true', help='Run verbosely')
